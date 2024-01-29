@@ -2,7 +2,8 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, 
     signInWithRedirect, 
     signInWithPopup, 
-    GoogleAuthProvider 
+    GoogleAuthProvider,
+    createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { getFirestore, 
     doc, 
@@ -21,24 +22,36 @@ const firebaseConfig = {
 
   const firebaseApp = initializeApp(firebaseConfig);
 
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({
+  const googleProvider = new GoogleAuthProvider();
+
+  googleProvider.setCustomParameters({
     prompt: 'select_account'
   });
 
   export const auth = getAuth();
-  export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+  export const signInWithGooglePopup = () => signInWithPopup(auth, googleProvider);
 
   export const db = getFirestore();
 
-  export const createUserDocumentFromAuth = async (userAuth) => {
+  export const createUserDocumentFromAuth = async (userAuth, additionalInformation = {}) => {
+    if (!userAuth) return;
+    /*
+    <<signInWithGooglePopup>> 
+    
+    userDocRef is created by using the doc method and passing in the db, 
+    with collection name 'users' and userAuth.uid (which comes from the user that is passed in from the sign in component). 
+    This is just to get the location of the document.
+    The this reference is user by the getDoc method to get the data of the document in the variable userSnapshot. 
+    The exists method is used to check whether there is actually data there for this user.
+
+    In the if statement, the condition checks whether the user exists. 
+    If the user exists the first code block doesn't run and the userDocRef is returned. 
+    If the user does not exist, the code block executes and the user is created, setting all the data fields: displayName, email, and createdAt.
+    */
+    
     const userDocRef = doc(db, 'users', userAuth.uid);
 
-    console.log(userDocRef);
-
     const userSnapshot = await getDoc(userDocRef);
-    console.log(userSnapshot);
-    console.log(userSnapshot.exists());
 
     if(!userSnapshot.exists()) {
         const { displayName, email } = userAuth;
@@ -48,7 +61,8 @@ const firebaseConfig = {
             await setDoc(userDocRef, {
                 displayName,
                 email,
-                createdAt
+                createdAt,
+                ...additionalInformation
             });
         } catch (error) {
             console.log('error creating the user', error.message);
@@ -56,4 +70,10 @@ const firebaseConfig = {
     }
 
     return userDocRef;
+  }
+
+  export const createAuthUserWithEmailAndPassword = async (email, password) => {
+    if (!email || !password) return;
+    
+    return await createUserWithEmailAndPassword(auth, email, password);
   }
