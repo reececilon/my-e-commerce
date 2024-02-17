@@ -24,7 +24,6 @@ field which is changed is added in and made to equal the value of the input.
 
 The fields that are set with the set method then changes the value attribute of each of the inputs.
 */
-
 /*
     <<SignUpForm>>
 
@@ -53,8 +52,6 @@ const SignUpForm = () => {
     const [formFields, setFormFields] = useState(defaultFormFields);
     const { displayName, email, password, confirmPassword } = formFields;
 
-    console.log(formFields);
-
     const resetFormFields = () => {
         setFormFields(defaultFormFields);
     }
@@ -70,7 +67,6 @@ const SignUpForm = () => {
 
         try {
             const { user } = await createAuthUserWithEmailAndPassword(email, password);
-            
             await createUserDocumentFromAuth(user, { displayName });
             resetFormFields();
         } catch(error) {
